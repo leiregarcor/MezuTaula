@@ -8,6 +8,9 @@ import java.io.IOException;
 import java.util.HashMap;
 
 public class LoginServlet extends HttpServlet {
+
+    // localhost:8080/MezuTaula/ sartzen sartuko gara LoginServlet-ean edo loginForm.jsp-etik post egitean
+
     // Objektu pribatu bat sortuko dugu eta servlet-a 1. aldiz deitzen denean
     // MySQLdb objektu bat instantziatuko da eta objektu honi lotuta geratuko da
     private MySQLdb mySQLdb;
@@ -15,9 +18,7 @@ public class LoginServlet extends HttpServlet {
     public LoginServlet() {
         super();
         System.out.println("---> Entering init() LoginServlet");
-
         mySQLdb = new MySQLdb();
-
         System.out.println("---> Exiting init() LoginServlet");
     }
 
@@ -34,6 +35,7 @@ public class LoginServlet extends HttpServlet {
         System.out.println("\tPasahitza: " + password);
 
         if(email != null && password != null) {
+            // datunasean bilatu email eta pasahitz horiek dituen erabiltzailea
             String username = mySQLdb.getUsername(email, password);
             System.out.println("\tRetrieved data from db: " + username);
 
@@ -41,8 +43,8 @@ public class LoginServlet extends HttpServlet {
             if(username == null) {
                 System.out.println("\tLogin error: redirecting the user to login form");
                 boolean loginerror = true;
-                request.setAttribute("login_error", loginerror);
-                RequestDispatcher rd = request.getRequestDispatcher("/jsp/loginForm.jsp");
+                request.setAttribute("login_error", loginerror); // eskariari atributu bat esleitzen -> ATRIBUTUA SOILIK ESKARIA ATZITU DEZAKE
+                RequestDispatcher rd = request.getRequestDispatcher("/jsp/loginForm.jsp"); // atributua URI horretara bidali????
                 rd.forward(request, response);
 
             // autentikazioa ondo
@@ -58,22 +60,27 @@ public class LoginServlet extends HttpServlet {
                 HashMap<String, String> loggedinUsers = (HashMap) context.getAttribute("loggedin_users"); // hash map, erabiltzaile eta pasahitza gordetzen ditu
 
                 // logeatutako erabiltzaileen zerrenda kudeatu
-                if(loggedinUsers == null) { // zerbitzaria abiarazi berri bada (ez erabiltzailerik logeatu)
+                if(loggedinUsers == null) { // zerrenda hutsa-> zerbitzaria abiarazi berri bada (ez erabiltzailerik logeatu)
                     System.out.println("list is empty");
                     loggedinUsers = new HashMap();
-                    loggedinUsers.put(username, sessionID);
+                    loggedinUsers.put(username, sessionID); // erabiltzailea +
                 } else { // zerbitzarian erabiltzaileak daude jada
-                    if(!loggedinUsers.containsKey(username)) {
+                    if(!loggedinUsers.containsKey(username)) { // zerrenda ez dago huts baina ez dago erabiltzailea sartuta
                         System.out.println(username + " is not in the list");
-                        loggedinUsers.put(username, sessionID);
+                        loggedinUsers.put(username, sessionID); // erabiltzailea +
                     } else {
                         System.out.println(username + " is already in the list");
                     }
                 }
+
+                // testuingurua 'edonorrentzat' atzigarri dago zerbitzarian
+                // zerrenda testuinguruan gehitu atributu bezela
+                context.setAttribute("loggedin_users", loggedinUsers);
+                System.out.println("\tLoggedin users: " + loggedinUsers.toString());
+
                 System.out.println("\tRedirecting the user to MainServlet");
                 RequestDispatcher rd = context.getNamedDispatcher("MainServlet");
                 rd.forward(request, response);
-
             }
 
 
