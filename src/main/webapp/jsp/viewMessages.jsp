@@ -60,7 +60,7 @@ Created by IntelliJ IDEA.
         </section>
 
         <section>
-            <form method="POST" action="/mezuTaula/servlet/MainServlet">
+            <form method="POST" action="/MezuTaula/servlet/MainServlet">
                 <table>
                     <tr>
                         <td>Message:</td>
