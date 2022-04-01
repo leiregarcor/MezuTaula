@@ -1,5 +1,6 @@
 package mezutaula;
 
+import com.google.gson.Gson;
 import helper.db.MySQLdb;
 import helper.info.MessageInfo;
 
@@ -40,26 +41,40 @@ public class MainServlet extends HttpServlet {
         } else {
             System.out.println("\tUser is logged in");
 
-            // ikusi ia mezurik bidali den (datu basean gorde behar diren ala ez mezu berriren bat)
-            String message = request.getParameter("message");
-            if(message != null) { // erabiltzaileak mezu bat bidali nahi du
-                String username = (String) session.getAttribute("username");
-                mySQLdb.setMessageInfo(message, username); // mezua DB-an gorde
+            String format = request.getParameter("format");
+            if(format != null) {
+                if(format.equals("json")) {
+                    PrintWriter http_out = response.getWriter(); // Erantzunaren edukian idazteko
+
+                    System.out.println("\tConverting ArrayList<MessageInfo> to json");
+                    ArrayList<MessageInfo> messageList = mySQLdb.getAllMessages();
+                    Gson gson = new Gson();
+                    String messageList_json = gson.toJson(messageList);
+                    System.out.println("\tmessageList_json: " + messageList_json);
+                    response.setContentType("application/json");
+                    http_out.println(messageList_json);
+                }
+            } else{
+                // ikusi ia mezurik bidali den (datu basean gorde behar diren ala ez mezu berriren bat)
+                String message = request.getParameter("message");
+                if (message != null) { // erabiltzaileak mezu bat bidali nahi du
+                    String username = (String) session.getAttribute("username");
+                    mySQLdb.setMessageInfo(message, username); // mezua DB-an gorde
+                }
+
+                // mezuen zerrenda atera DB eta eskaeran atributu bezala erantsi gero JSP-ak atributu hori atera dezan
+                ArrayList<MessageInfo> messageList = mySQLdb.getAllMessages();
+                request.setAttribute("messageList", messageList);
+
+                // iraungitze denbora atera
+                int inactive_interval = session.getMaxInactiveInterval();
+                request.setAttribute("inactive_interval", inactive_interval);
+
+                // kontrola pasatu jsp-ra
+                System.out.println("\tRedirecting the user to viewMessages.jsp");
+                RequestDispatcher rd = request.getRequestDispatcher("/jsp/viewMessages.jsp");
+                rd.forward(request, response);
             }
-
-            // mezuen zerrenda atera DB eta eskaeran atributu bezala erantsi gero JSP-ak atributu hori atera dezan
-            ArrayList<MessageInfo> messageList = mySQLdb.getAllMessages();
-            request.setAttribute("messageList", messageList);
-
-            // iraungitze denbora atera
-            int inactive_interval = session.getMaxInactiveInterval();
-            request.setAttribute("inactive_interval", inactive_interval);
-
-            // kontrola pasatu jsp-ra
-            System.out.println("\tRedirecting the user to viewMessages.jsp");
-            RequestDispatcher rd = request.getRequestDispatcher("/jsp/viewMessages.jsp");
-            rd.forward(request, response);
-
 
         }
         System.out.println("---> MainServlet servlet-etik irtetzen...");
